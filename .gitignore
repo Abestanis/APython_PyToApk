@@ -1,0 +1,13 @@
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Python
+*.py[cod]
+
+# Project
+.gradle/
+build/
+output/
+template/
+last.log
