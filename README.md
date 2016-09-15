@@ -1,4 +1,4 @@
-# APython-pyToApk
+# The PyToApk script
 ## About the APython project
 
 The APython project enables the usage of Python programs on the Android platform in a more efficient way than current implementations.
