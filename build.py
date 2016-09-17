@@ -11,7 +11,7 @@ Created 25.05.2016 by Sebastian Scholz.
 
 import os, sys, shutil
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
-from argparse import ArgumentParser
+from argparse import ArgumentParser, REMAINDER
 from config import Config
 from time import sleep
 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
                 if commandfile != '__init__.py' and commandfile[-3:] == '.py']
     parser.add_argument('action', choices = commands,
                         help = 'Specifies the action to execute.')
-    parser.add_argument('commandArgs', nargs = '*',
+    parser.add_argument('commandArgs', nargs = REMAINDER,
                         help = 'The arguments for the specified action')
     parser.add_argument('--logFile', help = 'The path to a log file. If not ' +
                         'specified, all output goes to stdout.')

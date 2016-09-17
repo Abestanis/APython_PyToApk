@@ -44,7 +44,7 @@ def initialize(gitPath, repoUrl, repoDir, logger):
     '''
     if os.path.exists(repoDir):
         if not os.path.isdir(repoDir):
-            logger.error('Failed to initialitze the repository from "' + repoUrl +
+            logger.error('Failed to initialize the repository from "' + repoUrl +
                          '" to "' + repoDir + '": The destination is an existing file!')
             return False
         rmtree(repoDir)
