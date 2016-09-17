@@ -43,7 +43,7 @@ class ApkBuilder(object):
             self.buildDebug = section.getBoolean('buildDebug')
     
     def parseCommandArgs(self, args):
-        parser = ArgumentParser() # TODO: Description
+        parser = ArgumentParser(prog='build.py apk') # TODO: Description
         parser.add_argument('--templateGit', help = 'The url to the git file of ' +
                             'repository that provides the template for the app.')
         parser.add_argument('--sourceDir', help = 'The path to the directory that ' +
@@ -53,7 +53,10 @@ class ApkBuilder(object):
                             'signed with a debug key and will not be optimized ' +
                             '(see https://developer.android.com/studio/build/' +
                             'building-cmdline.html#DebugMode).')
-        cmdArgs = parser.parse_args(args)
+        try:
+            cmdArgs = parser.parse_args(args)
+        except SystemExit as ex: # Catch exit from error or help
+            return ex.code == 0
         if 'templateGit' in cmdArgs and cmdArgs.templateGit != None:
             self.templateGit = cmdArgs.templateGit
         if 'sourceDir' in cmdArgs and cmdArgs.sourceDir != None:
@@ -61,6 +64,7 @@ class ApkBuilder(object):
         print(cmdArgs)
         if 'buildDebug' in cmdArgs and cmdArgs.buildDebug != None:
             self.buildDebug = cmdArgs.buildDebug
+        return None
     
     def validateConfig(self):
         valid = True
@@ -143,7 +147,8 @@ class ApkBuilder(object):
         return apkPath
     
     def run(self, cmdArgs):
-        self.parseCommandArgs(cmdArgs)
+        parseResult = self.parseCommandArgs(cmdArgs)
+        if parseResult is not None: return parseResult
         if not self.validateConfig():
             return False
         if not deleteDir(self.apkBuildDir):
