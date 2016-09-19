@@ -1,11 +1,11 @@
 import os
 import shutil
+import subprocess
 from utils import git
 from utils.apkTemplateCommands import runTemplateCommands
 from utils.files import deleteDir, mkdirs
-import subprocess
+from utils.subCmdArgParser import SubCmdArgParser, ArgumentParserError, InfoActionProcessed
 from logger import Logger
-from argparse import ArgumentParser
 
 
 class ApkBuilder(object):
@@ -43,7 +43,7 @@ class ApkBuilder(object):
             self.buildDebug = section.getBoolean('buildDebug')
     
     def parseCommandArgs(self, args):
-        parser = ArgumentParser(prog='build.py apk') # TODO: Description
+        parser = SubCmdArgParser(prog='build.py apk') # TODO: Description
         parser.add_argument('--templateGit', help = 'The url to the git file of ' +
                             'repository that provides the template for the app.')
         parser.add_argument('--sourceDir', help = 'The path to the directory that ' +
@@ -53,10 +53,7 @@ class ApkBuilder(object):
                             'signed with a debug key and will not be optimized ' +
                             '(see https://developer.android.com/studio/build/' +
                             'building-cmdline.html#DebugMode).')
-        try:
-            cmdArgs = parser.parse_args(args)
-        except SystemExit as ex: # Catch exit from error or help
-            return ex.code == 0
+        cmdArgs = parser.parse_args(args)
         if 'templateGit' in cmdArgs and cmdArgs.templateGit != None:
             self.templateGit = cmdArgs.templateGit
         if 'sourceDir' in cmdArgs and cmdArgs.sourceDir != None:
@@ -64,7 +61,6 @@ class ApkBuilder(object):
         print(cmdArgs)
         if 'buildDebug' in cmdArgs and cmdArgs.buildDebug != None:
             self.buildDebug = cmdArgs.buildDebug
-        return None
     
     def validateConfig(self):
         valid = True
@@ -147,7 +143,12 @@ class ApkBuilder(object):
         return apkPath
     
     def run(self, cmdArgs):
-        parseResult = self.parseCommandArgs(cmdArgs)
+        try:
+            self.parseCommandArgs(cmdArgs)
+        except InfoActionProcessed:
+            return True
+        except ArgumentParserError as e:
+            return e.code == 0
         if parseResult is not None: return parseResult
         if not self.validateConfig():
             return False
