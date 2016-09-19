@@ -4,7 +4,7 @@ import subprocess
 from utils import git
 from utils.apkTemplateCommands import runTemplateCommands
 from utils.files import deleteDir, mkdirs
-from utils.subCmdArgParser import SubCmdArgParser, ArgumentParserError, InfoActionProcessed
+from utils.argparser import SubCmdArgParser, ArgumentParserError, InfoActionProcessed
 from logger import Logger
 
 
