@@ -75,10 +75,13 @@ class Logger(object):
         if self._logFile == None:
             if isError:
                 sys.stderr.write(msg + '\n')
+                sys.stderr.flush()
             else:
                 print(msg)
+                sys.stdout.flush()
         else:
             self._logFile.write(msg + '\n')
+            self._logFile.flush()
     
     def _log(self, priority, msg):
         '''>>> _log(priority, msg)
