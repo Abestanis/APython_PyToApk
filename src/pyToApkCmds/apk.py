@@ -2,9 +2,10 @@ import os
 import shutil
 import subprocess
 from utils import git
-from utils.apkTemplateCommands import runTemplateCommands
-from utils.files import deleteDir, mkdirs
+from utils.apktemplate import ApkTemplateFiller
+from utils.files import deleteDir, mkdirs, resolvePath
 from utils.argparser import SubCmdArgParser, ArgumentParserError, InfoActionProcessed
+from argparse import REMAINDER
 from logger import Logger
 
 
@@ -20,7 +21,10 @@ class ApkBuilder(object):
     apkOutputDir = None
     templateGit = None
     sourceDir = None
+    sourceConfig = None
     buildDebug = False
+    doInstall = False
+    installArgs = None
     
     def __init__(self, config):
         self.config = config
@@ -38,9 +42,13 @@ class ApkBuilder(object):
         if section.hasOption('templateGit'):
             self.templateGit = section.get('templateGit')
         if section.hasOption('sourceDir'):
-            self.sourceDir = self.config.evaluatePath(section.get('sourceDir'))
-        if section.hasOption('buildDebug'):
+            self.sourceDir = section.get('sourceDir', evaluatePath = True)
+        if section.hasOption('sourceConfig'):
+            self.sourceConfig = section.get('sourceConfig', evaluatePath = True)
+        if not self.buildDebug and section.hasOption('buildDebug'):
             self.buildDebug = section.getBoolean('buildDebug')
+        if not self.doInstall and section.hasOption('install'):
+            self.doInstall = section.getBoolean('install')
     
     def parseCommandArgs(self, args):
         parser = SubCmdArgParser(prog='build.py apk') # TODO: Description
@@ -48,22 +56,38 @@ class ApkBuilder(object):
                             'repository that provides the template for the app.')
         parser.add_argument('--sourceDir', help = 'The path to the directory that ' +
                             'contains the source code of your python program.')
+        parser.add_argument('--sourceConfig', help = 'The path to the file that ' +
+                            'contains the configuration of your python program.' +
+                            'For more information on the app configuration, ' +
+                            'visit https://github.com/Abestanis/APython_PyToApk' +
+                            '/blob/master/docs/apkGeneration.md. Defaults to ' +
+                            'setup.cfg in the sourceDir.')
         parser.add_argument('--buildDebug', action = 'store_true', default = self.buildDebug,
                             help = 'If specified, the generated apk will be ' +
                             'signed with a debug key and will not be optimized ' +
                             '(see https://developer.android.com/studio/build/' +
                             'building-cmdline.html#DebugMode).')
+        parser.add_argument('--install', nargs = REMAINDER,
+                            help = 'If specified, the install command will be ' +
+                            'executed after the build command with the arguments provided.')
         cmdArgs = parser.parse_args(args)
         if 'templateGit' in cmdArgs and cmdArgs.templateGit != None:
             self.templateGit = cmdArgs.templateGit
         if 'sourceDir' in cmdArgs and cmdArgs.sourceDir != None:
-            self.sourceDir = self.config.evaluatePath(cmdArgs.sourceDir)
-        print(cmdArgs)
+            self.sourceDir = resolvePath(cmdArgs.sourceDir, self.config.currDir)
+        if 'sourceConfig' in cmdArgs and cmdArgs.sourceConfig != None:
+            self.sourceConfig = resolvePath(cmdArgs.sourceConfig, self.config.currDir)
         if 'buildDebug' in cmdArgs and cmdArgs.buildDebug != None:
             self.buildDebug = cmdArgs.buildDebug
+        if 'install' in cmdArgs and cmdArgs.install != None:
+            self.doInstall = True
+            self.installArgs = cmdArgs.install
     
     def validateConfig(self):
         valid = True
+        if self.config.sdkPath == None:
+            valid = False
+            self.config.logger.error('The path to the sdk directory was not specified!')
         if self.templateGit == None:
             valid = False
             self.config.logger.error('The url to the template repository git ' +
@@ -77,6 +101,16 @@ class ApkBuilder(object):
             self.config.logger.error('The path to the source directory of your ' +
                                      'python program does not point to an ' +
                                      'existing directory: ' + self.sourceDir)
+        if self.sourceConfig == None:
+            if self.sourceDir != None:
+                self.sourceConfig = os.path.join(self.sourceDir, 'setup.cfg')
+                if not os.path.isfile(self.sourceConfig):
+                    self.sourceConfig = None
+        elif os.path.isdir(self.sourceConfig):
+            valid = False
+            self.config.logger.error('The path to the source configuration file ' +
+                                     'of your python program points to an ' +
+                                     'existing directory: ' + self.sourceConfig)
         return valid
     
     def ensureTemplate(self, allowUpdate = True):
@@ -88,34 +122,15 @@ class ApkBuilder(object):
                               self.apkTemplateDir, self.config.logger)
     
     def fillTemplate(self):
-        self.config.logger.info('Filling template...')
-        formatArgs = {
-            'appLogTag': 'MyPythonApp',
-            'windowType': 'SDL',
-            'minPyVersion': '3.5',
-            'requirements': 'twisted',
-        }
+        self.config.logger.info('Copying template to build directory...')
         shutil.copytree(self.apkTemplateDir, self.apkBuildDir,
                         ignore = lambda src, names: ['.git'])
-        for dirpath, dirnames, filenames in os.walk(self.apkBuildDir):
-            if '.git' in dirnames:
-                del(dirnames[dirnames.index('.git')])
-            javaFiles = [os.path.join(dirpath, filename) for filename in filenames
-                         if filename[-5:] == '.java']
-            for javaFile in javaFiles:
-                lines = []
-                with open(javaFile) as f:
-                    lines = f.readlines()
-                with open(javaFile, 'w') as f:
-                    for i in range(len(lines)):
-                        f.write(runTemplateCommands(lines[i], formatArgs))
-        return self.createPropertiesFile()
-    
-    def createPropertiesFile(self):
-        with open(os.path.join(self.apkBuildDir, 'local.properties'), 'w') as propertiesFile:
-            sdkPath = self.config.sdkPath.replace('\\', '\\\\').replace(':', '\\:')
-            propertiesFile.write('sdk.dir=' + sdkPath)
-        return True
+        apkTemplateFiller = ApkTemplateFiller(self.apkBuildDir, self.config.logger)
+        if self.sourceConfig != None:
+            if not apkTemplateFiller.loadConfigFile(self.sourceConfig):
+                return False
+        self.config.logger.info('Filling template...')
+        return apkTemplateFiller.fillTemplate(self.config.sdkPath)
     
     def copyPythonSources(self):
         pythonSourceDest = os.path.join(self.apkBuildDir, self.pythonSubPath)
@@ -136,6 +151,7 @@ class ApkBuilder(object):
             args += ['--info', '--stacktrace']
         self.config.logger.verbose('Calling ' + subprocess.list2cmdline(args))
         if not subprocess.call(args, cwd = self.apkBuildDir) == 0:
+            self.config.logger.error('Generating the apk failed!')
             return None
         apkPath = os.path.join(self.apkBuildDir, self.apkSubPath, self.DEBUG_APK if debug else self.RELEASE_APK)
         if not os.path.exists(apkPath):
@@ -149,7 +165,6 @@ class ApkBuilder(object):
             return True
         except ArgumentParserError as e:
             return e.code == 0
-        if parseResult is not None: return parseResult
         if not self.validateConfig():
             return False
         if not deleteDir(self.apkBuildDir):
@@ -177,6 +192,9 @@ class ApkBuilder(object):
             outputApkPath = apkPath
         self.config.logger.info('The apk was successfully build and is stored at\n' +
                                 outputApkPath)
+        if self.doInstall:
+            from install import run as runinstall
+            return runinstall(self.config, self.installArgs)
         return True
 
 

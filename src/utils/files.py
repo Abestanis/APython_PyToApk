@@ -33,3 +33,18 @@ def deleteDir(dirPath):
     elif os.path.isfile(dirPath):
         return False
     return True
+
+def resolvePath(path, currDir = None):
+    '''>>> resolvePath(path, currDir) -> path
+    Resolves the given path to an absolute path. If the
+    given path is not absolute, it is joined with the
+    current directory or the directory given via currDir.
+    
+    '''
+    if path is None: return None
+    if currDir is None:
+        currDir = os.curdir
+    path = os.path.expanduser(os.path.expandvars(path))
+    if os.path.isabs(path):
+        return path
+    return os.path.join(currDir, path)
