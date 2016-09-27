@@ -5,6 +5,7 @@ from files import resolvePath
 from shutil import copy as copyFile
 
 class ApkTemplateFiller(object):
+    '''Handles the filling of the apk template.'''
     templateDir = None
     logger = None
     _PYTHON_VERSION_REGEX = re.compile(r'\A\d+(\.\d+){0,2}\Z')
@@ -43,6 +44,10 @@ class ApkTemplateFiller(object):
         self.logger = logger
     
     def validateValues(self):
+        '''>>> validateValues() -> boolean
+        Validate all formatting arguments and fill
+        in defaults for some if they are missing.
+        '''
         valid = True
         for key in self.formatArgs:
             if key not in self.FORMAT_ARG_VERIFIERS:
@@ -80,6 +85,10 @@ class ApkTemplateFiller(object):
         return valid
     
     def loadConfigFile(self, path):
+        '''>>> loadConfigFile(path) -> success
+        Load formatting arguments from the section
+        android_app of configuration file at path.
+        '''
         parser = ConfigParser()
         if not path in parser.read(path):
             self.logger.error('Failed to read the apps config from ' + path)
@@ -122,6 +131,10 @@ class ApkTemplateFiller(object):
         pass
     
     def copyIcon(self):
+        '''>>> copyIcon() -> success
+        Copy the custom icon of the Python program
+        into the template, if one was specified.
+        '''
         if self.appIcon == None: return True
         self.logger.info('Copying icon file...')
         templateIconPath = os.path.join(self.templateDir, self.TEMLATE_ICON_PATH)
@@ -134,6 +147,10 @@ class ApkTemplateFiller(object):
         return True
     
     def copyCustomManifestTemplate(self):
+        '''>>> copyCustomManifestTemplate() -> success
+        Copy the custom manifest template of the Python
+        program into the template, if one was specified.
+        '''
         if self.appManifestTemplate == None: return True
         templateManifestPath = os.path.join(self.templateDir, self.TEMPLATE_MANIFEST_PATH)
         self.logger.info('Copying manifest template...')
@@ -146,7 +163,9 @@ class ApkTemplateFiller(object):
         return True
     
     def changePackageName(self):
-        # Change the directory that make up the package name
+        '''>>> changePackageName() -> success
+        Rename the directory that makes up the package name.
+        '''
         parentDirPath = os.path.join(self.templateDir, self.JAVA_PACKAGE_DIR_PATH)
         if not os.path.isdir(parentDirPath):
             self.logger.error('Failed to find the directory that describes the ' +
@@ -168,6 +187,11 @@ class ApkTemplateFiller(object):
         return True
     
     def _fillVarInText(self, text):
+        '''>>> _fillVarInText(text) -> string
+        Replace any default value with the corresponding
+        formatting argument, if there is a replace command
+        in the text.
+        '''
         cmdStart = text.find('REPLACE(')
         if cmdStart == -1: return text
         cmdData = text[cmdStart + len('REPLACE('):]
@@ -192,6 +216,10 @@ class ApkTemplateFiller(object):
         return text
     
     def _fillFileTemplate(self, filePath):
+        '''_fillFileTemplate(filePath)
+        Fill all default values in the provided file
+        with their corresponding formatting arguments.
+        '''
         lines = []
         with open(filePath) as f:
             lines = f.readlines()
@@ -200,6 +228,12 @@ class ApkTemplateFiller(object):
                 f.write(self._fillVarInText(line))
     
     def fillTemplate(self, sdkPath):
+        '''>>> fillTemplate(sdkPath) -> success
+        Fill all default values in the template
+        with their corresponding formatting arguments.
+        Also setts the sdk path of the template
+        configuration to the provided one.
+        '''
         if self.formatArgs is None:
             self.logger.warn('No arguments specified to fill in the apk template. ' +
                              'The app will be generated using the default ' +
@@ -218,6 +252,10 @@ class ApkTemplateFiller(object):
         return self.createPropertiesFile(sdkPath) and self.changePackageName()
     
     def createPropertiesFile(self, sdkPath):
+        '''>>> createPropertiesFile(sdkPath):
+        Create a local.properties file in the template
+        and set the sdk path to the provided path.
+        '''
         with open(os.path.join(self.templateDir, 'local.properties'), 'w') as propertiesFile:
             sdkPath = sdkPath.replace('\\', '\\\\').replace(':', '\\:')
             propertiesFile.write('sdk.dir=' + sdkPath)

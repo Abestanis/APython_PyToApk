@@ -4,8 +4,13 @@ from logger import Logger
 from utils.files import resolvePath
 
 class Config(object):
+    '''Holds a general set of configuration for all commands as
+    well as a logger object and a handle to the configuration file
+    to receive sections from it.
+    '''
     
     class ConfigSection:
+        '''A handle to a section from a configuration file.'''
         _parser = None
         _sectionName = None
         _currDir = None
@@ -16,14 +21,27 @@ class Config(object):
             self._currDir = currDir
         
         def hasOption(self, name):
+            '''>>> hasOption(name) -> boolean
+            Returns True if the section has an option
+            with the given name.
+            '''
             return self._parser.has_option(self._sectionName, name)
         
         def get(self, name, evaluatePath = False):
+            '''>>> get(name, evaluatePath) -> string
+            Returns the value of the option named name in this section.
+            If evaluatePath is True, the value is treated as a
+            path and will be resolved to an absolute path.
+            '''
             result = self._parser.get(self._sectionName, name)
             if evaluatePath: result = resolvePath(result, self._currDir)
             return result
         
         def getBoolean(self, name):
+            '''>>> getBoolean(name) -> boolean
+            Returns the boolean value of the option named name
+            in this section.
+            '''
             return self._parser.getboolean(self._sectionName, name)
     
     _parser = None
@@ -41,6 +59,11 @@ class Config(object):
         self.currDir = currDir
     
     def loadConfigFile(self, configPath, configureLogging = True):
+        '''>>> loadConfigFile(configPath, configureLogging) -> success
+        Loads all configuration possible from the given
+        configuration file. If configureLogging is False
+        no configuration specific to logging is loaded.
+        '''
         if configPath == None:
             configPath = os.path.join(self.currDir, 'config.cfg')
         if not self._loadConfigFile(configPath):
@@ -64,8 +87,14 @@ class Config(object):
         return True
     
     def parseCmdArgs(self, args):
+        '''>>> parseCmdArgs(args) -> success
+        Parses the given command line arguments.
+        Also loads the configuration file if one was
+        specified by the command line arguments.
+        '''
         self._parseLoggingConfig(args)
-        self.loadConfigFile(args.configFile, configureLogging = False)
+        if not self.loadConfigFile(args.configFile, configureLogging = False):
+            return False
         if 'avoidNetwork' in args and args.avoidNetwork: # Is not specified if False
             self.avoidNetwork = args.avoidNetwork
         if 'buildDir' in args and args.buildDir != None:
@@ -83,6 +112,11 @@ class Config(object):
         return True
     
     def validateValues(self):
+        '''>>> validateValues() -> boolean
+        Validate that the current config values are
+        correct. Note that some config fields are allowed
+        to be empty: sdkPath, ndkPath and gitPath.
+        '''
         valid = True
         def _checkDir(path, name, allowMissing = False, requireExist = True):
             if path == None:
@@ -112,11 +146,19 @@ class Config(object):
         return valid
     
     def getSection(self, sectionName):
+        '''>>> getSection(sectionName) -> Section or None
+        Get the section with the sectionName from the
+        loaded configuration file.
+        '''
         if self._parser == None or not self._parser.has_section(sectionName):
             return None
         return self.ConfigSection(self._parser, sectionName, self.currDir)
     
     def _loadConfigFile(self, path):
+        '''>>> _loadConfigFile(path) -> success
+        Load the config file at path in a new
+        ConfigParser.
+        '''
         if self._parser != None: return True
         self._parser = ConfigParser()
         path = resolvePath(path, self.currDir)
@@ -126,7 +168,12 @@ class Config(object):
         return True
         
     
-    def _parseLoggingConfig(self, cmdArgs = None):
+    def _parseLoggingConfig(self, cmdArgs):
+        '''>>> _parseLoggingConfig(cmdArgs)
+        Parse all logging related configuration from the
+        given command line arguments and from any configuration
+        file specified by the arguments.
+        '''
         cmdHasLevel = cmdHasFile = False
         if cmdArgs is not None:
             if 'logFile' in cmdArgs and cmdArgs.logFile != None:
@@ -143,6 +190,9 @@ class Config(object):
             self._parseLogLevel(self._parser.get('General', 'logLevel'))
     
     def _parseLogLevel(self, logLevel):
+        '''>>> _parseLogLevel(logLevel) -> success
+        Parse and set the log level of the logger.
+        '''
         LOG_LEVELS = {
             'verbose': Logger.PRIORITY_VERBOSE,
             'info':    Logger.PRIORITY_INFO,
