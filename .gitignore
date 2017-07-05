@@ -5,6 +5,11 @@ ehthumbs.db
 # Python
 *.py[cod]
 
+# Intellij
+.idea/
+*.iml
+*.iws
+
 # Project
 .gradle/
 build/
