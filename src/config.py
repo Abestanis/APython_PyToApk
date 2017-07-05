@@ -1,49 +1,58 @@
+from __future__ import absolute_import
+
 import os
-from ConfigParser import ConfigParser
-from logger import Logger
-from utils.files import resolvePath
+
+try:
+    from ConfigParser import ConfigParser
+except ImportError:
+    from configparser import ConfigParser
+from .logger import Logger
+from .utils.files import resolvePath
+
 
 class Config(object):
-    '''Holds a general set of configuration for all commands as
+    """
+    Holds a general set of configuration for all commands as
     well as a logger object and a handle to the configuration file
     to receive sections from it.
-    '''
-    
+    """
+
     class ConfigSection:
-        '''A handle to a section from a configuration file.'''
+        """A handle to a section from a configuration file."""
         _parser = None
         _sectionName = None
         _currDir = None
-        
+
         def __init__(self, parser, sectionName, currDir):
             self._parser = parser
             self._sectionName = sectionName
             self._currDir = currDir
-        
+
         def hasOption(self, name):
-            '''>>> hasOption(name) -> boolean
+            """>>> hasOption(name) -> boolean
             Returns True if the section has an option
             with the given name.
-            '''
+            """
             return self._parser.has_option(self._sectionName, name)
-        
-        def get(self, name, evaluatePath = False):
-            '''>>> get(name, evaluatePath) -> string
+
+        def get(self, name, evaluatePath=False):
+            """>>> get(name, evaluatePath) -> string
             Returns the value of the option named name in this section.
             If evaluatePath is True, the value is treated as a
             path and will be resolved to an absolute path.
-            '''
+            """
             result = self._parser.get(self._sectionName, name)
-            if evaluatePath: result = resolvePath(result, self._currDir)
+            if evaluatePath:
+                result = resolvePath(result, self._currDir)
             return result
-        
+
         def getBoolean(self, name):
-            '''>>> getBoolean(name) -> boolean
+            """>>> getBoolean(name) -> boolean
             Returns the boolean value of the option named name
             in this section.
-            '''
+            """
             return self._parser.getboolean(self._sectionName, name)
-    
+
     _parser = None
     logger = Logger()
     currDir = None
@@ -54,17 +63,17 @@ class Config(object):
     gitPath = None
     sdkPath = None
     ndkPath = None
-    
+
     def __init__(self, currDir):
         self.currDir = currDir
-    
-    def loadConfigFile(self, configPath, configureLogging = True):
-        '''>>> loadConfigFile(configPath, configureLogging) -> success
+
+    def loadConfigFile(self, configPath, configureLogging=True):
+        """>>> loadConfigFile(configPath, configureLogging) -> success
         Loads all configuration possible from the given
         configuration file. If configureLogging is False
         no configuration specific to logging is loaded.
-        '''
-        if configPath == None:
+        """
+        if configPath is None:
             configPath = os.path.join(self.currDir, 'config.cfg')
         if not self._loadConfigFile(configPath):
             return False
@@ -85,126 +94,130 @@ class Config(object):
         if self._parser.has_option('Paths', 'ndkPath'):
             self.ndkPath = resolvePath(self._parser.get('Paths', 'ndkPath'), self.currDir)
         return True
-    
+
     def parseCmdArgs(self, args):
-        '''>>> parseCmdArgs(args) -> success
+        """>>> parseCmdArgs(args) -> success
         Parses the given command line arguments.
         Also loads the configuration file if one was
         specified by the command line arguments.
-        '''
+        """
         self._parseLoggingConfig(args)
-        if not self.loadConfigFile(args.configFile, configureLogging = False):
+        if not self.loadConfigFile(args.configFile, configureLogging=False):
             return False
-        if 'avoidNetwork' in args and args.avoidNetwork: # Is not specified if False
+        if 'avoidNetwork' in args and args.avoidNetwork:  # Is not specified if False
             self.avoidNetwork = args.avoidNetwork
-        if 'buildDir' in args and args.buildDir != None:
+        if 'buildDir' in args and args.buildDir is not None:
             self.buildDir = resolvePath(args.buildDir, self.currDir)
-        if 'outputDir' in args and args.outputDir != None:
+        if 'outputDir' in args and args.outputDir is not None:
             self.outputDir = resolvePath(args.outputDir, self.currDir)
-        if 'templateDir' in args and args.templateDir != None:
+        if 'templateDir' in args and args.templateDir is not None:
             self.templateDir = resolvePath(args.templateDir, self.currDir)
-        if 'gitPath' in args and args.gitPath != None:
+        if 'gitPath' in args and args.gitPath is not None:
             self.gitPath = resolvePath(args.gitPath, self.currDir)
-        if 'sdkPath' in args and args.sdkPath != None:
+        if 'sdkPath' in args and args.sdkPath is not None:
             self.sdkPath = resolvePath(args.sdkPath, self.currDir)
-        if 'ndkPath' in args and args.ndkPath != None:
+        if 'ndkPath' in args and args.ndkPath is not None:
             self.ndkPath = resolvePath(args.ndkPath, self.currDir)
         return True
-    
+
     def validateValues(self):
-        '''>>> validateValues() -> boolean
+        """>>> validateValues() -> boolean
         Validate that the current config values are
         correct. Note that some config fields are allowed
         to be empty: sdkPath, ndkPath and gitPath.
-        '''
+        """
         valid = True
-        def _checkDir(path, name, allowMissing = False, requireExist = True):
-            if path == None:
-                if allowMissing: return
-                valid = False
+
+        def _checkDir(path, name, allowMissing=False, requireExist=True):
+            if path is None:
+                if allowMissing:
+                    return
                 self.logger.error('Invalid configuration: No path for the ' +
-                                  name +' directory given!')
+                                  name + ' directory given!')
+                return False
             elif os.path.isfile(path):
-                valid = False
                 self.logger.error('Invalid configuration: The path to the ' + name +
                                   ' directory points to an existing file (' + path + ')!')
+                return False
             elif requireExist and not os.path.isdir(path):
-                valid = False
                 self.logger.error('Invalid configuration: The path to the ' + name +
                                   ' directory does not point to an existing directory ('
                                   + path + ')!')
-        
-        _checkDir(self.buildDir, 'build', requireExist = False)
-        _checkDir(self.outputDir, 'output', requireExist = False)
-        _checkDir(self.templateDir, 'template', requireExist = False)
-        _checkDir(self.sdkPath, 'sdk', allowMissing = True)
-        _checkDir(self.ndkPath, 'ndk', allowMissing = True)
-        if self.gitPath != None and not os.path.isfile(self.gitPath):
+                return False
+            return True
+
+        valid = _checkDir(self.buildDir, 'build', requireExist=False) and valid
+        valid = _checkDir(self.outputDir, 'output', requireExist=False) and valid
+        valid = _checkDir(self.templateDir, 'template', requireExist=False) and valid
+        valid = _checkDir(self.sdkPath, 'sdk', allowMissing=True) and valid
+        valid = _checkDir(self.ndkPath, 'ndk', allowMissing=True) and valid
+        if self.gitPath is not None and not os.path.isfile(self.gitPath):
             valid = False
             self.logger.error('Invalid configuration: The path to the git executable' +
                               ' is invalid (' + self.gitPath + ')!')
         return valid
-    
+
     def getSection(self, sectionName):
-        '''>>> getSection(sectionName) -> Section or None
+        """>>> getSection(sectionName) -> Section or None
         Get the section with the sectionName from the
         loaded configuration file.
-        '''
-        if self._parser == None or not self._parser.has_section(sectionName):
+        """
+        if self._parser is None or not self._parser.has_section(sectionName):
             return None
         return self.ConfigSection(self._parser, sectionName, self.currDir)
-    
+
     def _loadConfigFile(self, path):
-        '''>>> _loadConfigFile(path) -> success
+        """>>> _loadConfigFile(path) -> success
         Load the config file at path in a new
         ConfigParser.
-        '''
-        if self._parser != None: return True
+        """
+        if self._parser is not None:
+            return True
         self._parser = ConfigParser()
         path = resolvePath(path, self.currDir)
-        if  not path in self._parser.read(path):
+        if path not in self._parser.read(path):
             self.logger.warn('Failed to read the config file from ' + path)
             return False
         return True
-        
-    
-    def _parseLoggingConfig(self, cmdArgs):
-        '''>>> _parseLoggingConfig(cmdArgs)
+
+    def _parseLoggingConfig(self, cmdArgs=None):
+        """>>> _parseLoggingConfig(cmdArgs)
         Parse all logging related configuration from the
         given command line arguments and from any configuration
         file specified by the arguments.
-        '''
+        """
         cmdHasLevel = cmdHasFile = False
         if cmdArgs is not None:
-            if 'logFile' in cmdArgs and cmdArgs.logFile != None:
+            if 'logFile' in cmdArgs and cmdArgs.logFile is not None:
                 if self.logger.setLogFile(resolvePath(cmdArgs.logFile, self.currDir)):
                     cmdHasFile = True
-            if 'logLevel' in cmdArgs and cmdArgs.logLevel != None:
+            if 'logLevel' in cmdArgs and cmdArgs.logLevel is not None:
                 if self._parseLogLevel(cmdArgs.logLevel):
                     cmdHasLevel = True
-        if not self._loadConfigFile(cmdArgs.configFile): return
+        if not self._loadConfigFile(cmdArgs.configFile):
+            return
         if not cmdHasFile and self._parser.has_option('Paths', 'logFile'):
             logFile = resolvePath(self._parser.get('Paths', 'logFile'), self.currDir)
             self.logger.setLogFile(logFile)
         if not cmdHasLevel and self._parser.has_option('General', 'logLevel'):
             self._parseLogLevel(self._parser.get('General', 'logLevel'))
-    
+
     def _parseLogLevel(self, logLevel):
-        '''>>> _parseLogLevel(logLevel) -> success
+        """>>> _parseLogLevel(logLevel) -> success
         Parse and set the log level of the logger.
-        '''
+        """
         LOG_LEVELS = {
             'verbose': Logger.PRIORITY_VERBOSE,
-            'info':    Logger.PRIORITY_INFO,
-            'warn':    Logger.PRIORITY_WARN,
-            'error':   Logger.PRIORITY_ERROR,
-            'none':    Logger.PRIORITY_NONE,
+            'info': Logger.PRIORITY_INFO,
+            'warn': Logger.PRIORITY_WARN,
+            'error': Logger.PRIORITY_ERROR,
+            'none': Logger.PRIORITY_NONE,
         }
         logLevel = logLevel.strip().lower()
         key = None
         if logLevel in LOG_LEVELS.keys():
             key = logLevel
-        elif len(logLevel) == 1: # Allow 'v', 'i', 'w', 'e' and 'n'
+        elif len(logLevel) == 1:  # Allow 'v', 'i', 'w', 'e' and 'n'
             for name in LOG_LEVELS.keys():
                 if name[0] == logLevel:
                     key = name
