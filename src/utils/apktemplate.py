@@ -61,36 +61,34 @@ class ApkTemplateFiller(object):
         valid = True
         for key in self.formatArgs:
             if key not in self.FORMAT_ARG_VERIFIERS:
-                self.logger.warn('Found an unknown formatting argument: "' + key + '"')
+                self.logger.warn('Found an unknown formatting argument: "{name}"'.format(name=key))
         for argName, validator in self.FORMAT_ARG_VERIFIERS.items():
             if argName not in self.formatArgs:
                 if argName in self.FORMAT_ARG_DEFAULTS:
                     self.formatArgs[argName] = self.FORMAT_ARG_DEFAULTS[argName]
                 else:
-                    self.logger.warn('Missing formatting argument ' + argName +
-                                     ', the default value provided by the template ' +
-                                     'will be used')
+                    self.logger.warn('Missing formatting argument {name}, the default value '
+                                     'provided by the template will be used'.format(name=argName))
                     self.formatArgs[argName] = None
             else:
                 if not validator(self.formatArgs[argName]):
-                    self.logger.error('Invalid value for formatting argument ' +
-                                      argName + ': "' + self.formatArgs[argName] +
-                                      '"')
+                    self.logger.error('Invalid value for formatting argument {name}: "{value}"'
+                                      .format(name=argName, value=self.formatArgs[argName]))
                     valid = False
         if not valid:
-            self.logger.error('See https://github.com/Abestanis/APython_PyToApk/' +
+            self.logger.error('See https://github.com/Abestanis/APython_PyToApk/'
                               'blob/master/docs/apkGeneration.md for more information.')
         if self.appIcon is None:
-            self.logger.warn('There was no icon specified, the default icon ' +
-                             'provided by the template will be used.')
+            self.logger.warn('There was no icon specified, the default icon provided by '
+                             'the template will be used.')
         elif not os.path.isfile(self.appIcon):
             valid = False
-            self.logger.error('The specified icon path does not point to an ' +
-                              'existing file: ' + self.appIcon)
+            self.logger.error('The specified icon path does not point to an existing file: {path}'
+                              .format(path=self.appIcon))
         if self.appManifestTemplate is not None and not os.path.isfile(self.appManifestTemplate):
             valid = False
-            self.logger.error('The specified manifest template path does not ' +
-                              'point to an existing file: ' + self.appManifestTemplate)
+            self.logger.error('The specified manifest template path does not point to an '
+                              'existing file: {path}'.format(path=self.appManifestTemplate))
         return valid
 
     def loadConfigFile(self, path):
@@ -100,7 +98,7 @@ class ApkTemplateFiller(object):
         """
         parser = ConfigParser()
         if path not in parser.read(path):
-            self.logger.error('Failed to read the apps config from ' + path)
+            self.logger.error('Failed to read the apps config from {path}'.format(path=path))
             return False
         appDir = os.path.dirname(path)
         if parser.has_section('android_app'):
@@ -134,8 +132,8 @@ class ApkTemplateFiller(object):
                     self.logger.warn('No configuration found in the setup.py at ' + path)
                 self.formatArgs = None
         else:
-            self.logger.warn('No configuration found in the setup.py at ' + path +
-                             ': No configuration found called "android_app".')
+            self.logger.warn('No configuration found in the setup.py at {path}: '
+                             'No configuration found called "android_app".'.format(path=path))
         return True
 
     def loadConfigFromSetupPy(self, path):
@@ -151,8 +149,8 @@ class ApkTemplateFiller(object):
         self.logger.info('Copying icon file...')
         templateIconPath = os.path.join(self.templateDir, self.TEMPLATE_ICON_PATH)
         if not os.path.exists(templateIconPath):
-            self.logger.error('Could not find the icon file of the template at ' +
-                              templateIconPath)
+            self.logger.error('Could not find the icon file of the template at {path}'
+                              .format(path=templateIconPath))
             return False
         os.remove(templateIconPath)
         copyFile(self.appIcon, templateIconPath)
@@ -168,8 +166,8 @@ class ApkTemplateFiller(object):
         templateManifestPath = os.path.join(self.templateDir, self.TEMPLATE_MANIFEST_PATH)
         self.logger.info('Copying manifest template...')
         if not os.path.exists(templateManifestPath):
-            self.logger.error('Could not find the manifest file of the template at ' +
-                              templateManifestPath)
+            self.logger.error('Could not find the manifest file of the template at {path}'
+                              .format(path=templateManifestPath))
             return False
         os.remove(templateManifestPath)
         copyFile(self.appManifestTemplate, templateManifestPath)
@@ -181,20 +179,18 @@ class ApkTemplateFiller(object):
         """
         parentDirPath = os.path.join(self.templateDir, self.JAVA_PACKAGE_DIR_PATH)
         if not os.path.isdir(parentDirPath):
-            self.logger.error('Failed to find the directory that describes the ' +
-                              'package path: ' + parentDirPath + ' is not an ' +
-                              'existing directory!')
+            self.logger.error('Failed to find the directory that describes the package path: '
+                              '{path} is not an existing directory!'.format(path=parentDirPath))
             return False
         packageNameDirs = [path for path in os.listdir(parentDirPath)
                            if os.path.isdir(os.path.join(parentDirPath, path))]
         if len(packageNameDirs) == 0:
-            self.logger.error('Failed to find the directory that describes the ' +
-                              'package path: ' + parentDirPath + ' has no child ' +
-                              'directories!')
+            self.logger.error('Failed to find the directory that describes the package path: '
+                              '{path} has no child directories!'.format(path=parentDirPath))
             return False
         elif len(packageNameDirs) > 1:
-            self.logger.warn('Found multiple possible directories that describe the ' +
-                             'package path: ' + ', '.join(packageNameDirs))
+            self.logger.warn('Found multiple possible directories that describe the package path: '
+                             '{paths}'.format(paths=', '.join(packageNameDirs)))
         os.rename(os.path.join(parentDirPath, packageNameDirs[0]),
                   os.path.join(parentDirPath, self.formatArgs['appId']))
         return True
@@ -218,15 +214,15 @@ class ApkTemplateFiller(object):
                 if len(key) > 0:
                     key = key[:key.find(' ')]
                     if key not in self.formatArgs:
-                        self.logger.warn('Found unknown formatting variable "' +
-                                         key + '"!')
+                        self.logger.warn('Found unknown formatting variable "{name}"!'
+                                         .format(name=key))
                         return text
                     elif self.formatArgs[key] is None:
                         return text
-                    self.logger.verbose('Replacing variable "' + key + '" with "' +
-                                        self.formatArgs[key] + '"')
+                    self.logger.verbose('Replacing variable "{name}" with " {value}"'
+                                        .format(name=key, value=self.formatArgs[key]))
                     return text[:(indexes[0] - 1)] + self.formatArgs[key] + text[(indexes[1] - 1):]
-        self.logger.warn('Found invalid formatting command: "' + text + '"')
+        self.logger.warn('Found invalid formatting command: "{cmd}"'.format(cmd=text))
         return text
 
     def _fillFileTemplate(self, filePath):
@@ -248,10 +244,9 @@ class ApkTemplateFiller(object):
         configuration to the provided one.
         """
         if self.formatArgs is None:
-            self.logger.warn('No arguments specified to fill in the apk template. ' +
-                             'The app will be generated using the default ' +
-                             'configuration! This is most likely not what you want' +
-                             'and the resulting apk must only be used for testing.')
+            self.logger.warn('No arguments specified to fill in the apk template. The app will be '
+                             'generated using the default configuration! This is most likely not '
+                             'what you want and the resulting apk must only be used for testing.')
             return True
         if not self.validateValues():
             return False
@@ -273,5 +268,5 @@ class ApkTemplateFiller(object):
         """
         with open(os.path.join(self.templateDir, 'local.properties'), 'w') as propertiesFile:
             sdkPath = sdkPath.replace('\\', '\\\\').replace(':', '\\:')
-            propertiesFile.write('sdk.dir=' + sdkPath)
+            propertiesFile.write('sdk.dir={path}'.format(path=sdkPath))
         return True

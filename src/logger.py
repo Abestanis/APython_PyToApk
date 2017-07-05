@@ -30,8 +30,8 @@ class Logger(object):
         This file will be overwritten! Returns True on success.
         """
         if isdir(path):
-            self.warn('Failed to create the log file at ' + path
-                      + ': The path points to an existing directory!')
+            self.warn('Failed to create the log file at {path}: The path points to an '
+                      'existing directory!'.format(path=path))
             return False
         self._logFile = open(path, 'w')
         return True

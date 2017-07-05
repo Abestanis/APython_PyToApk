@@ -54,38 +54,38 @@ if __name__ == '__main__':
                         help='Specifies the action to execute.')
     parser.add_argument('commandArgs', nargs=REMAINDER,
                         help='The arguments for the specified action')
-    parser.add_argument('--logFile', help='The path to a log file. If not ' +
-                                          'specified, all output goes to stdout.')
+    parser.add_argument('--logFile', help='The path to a log file. If not specified, '
+                                          'all output goes to stdout.')
     parser.add_argument('--logLevel', choices=['verbose', 'v', 'info', 'i', 'warn',
                                                'w', 'error', 'e', 'none', 'n'],
-                        help='Specify the log level. "none" means no output ' +
-                             'except the result. Defaults to "info".')
+                        help='Specify the log level. "none" means no output except the result. '
+                             'Defaults to "info".')
     parser.add_argument('--configFile', default='config.cfg',
-                        help='The path to the config file. Defaults to the ' +
-                             'file "config.cfg" in the current directory.')
+                        help='The path to the config file. Defaults to the file '
+                             '"config.cfg" in the current directory.')
     parser.add_argument('--buildDir', default='build',
-                        help='The path to the build directory. Defaults to ' +
-                             'the directory "build" in the current directory.')
+                        help='The path to the build directory. Defaults to the directory '
+                             '"build" in the current directory.')
     parser.add_argument('--outputDir', default='output',
-                        help='The path to the output directory. Defaults to ' +
-                             'the directory "output" in the current directory.')
+                        help='The path to the output directory. Defaults to the directory '
+                             '"output" in the current directory.')
     parser.add_argument('--templateDir', default='template',
-                        help='The path to the template directory. Defaults to ' +
-                             'the directory "template" in the current directory.')
+                        help='The path to the template directory. Defaults to the directory '
+                             '"template" in the current directory.')
     parser.add_argument('--gitPath', help='The path to the git executable (git.exe).')
-    parser.add_argument('--sdkPath', help='The path to the installation directory of ' +
+    parser.add_argument('--sdkPath', help='The path to the installation directory of '
                                           'the Android Software Development Kit (sdk).')
-    parser.add_argument('--ndkPath', help='The path to the installation directory of ' +
+    parser.add_argument('--ndkPath', help='The path to the installation directory of '
                                           'the Android Native Development Kit (ndk).')
     parser.add_argument('--avoidNetwork', action='store_true',
-                        help='Specify if this program should avoid using the internet ' +
+                        help='Specify if this program should avoid using the internet '
                              'if possible (e.g. to search for updates of templates).')
 
     args = parser.parse_args()
     pyToApk = PyToApk(args)
-    taskResult = pyToApk.executeTask(args.action)
-    pyToApk.config.logger.write('Executing command ' + args.action + ' ' +
-                                ('SUCCEEDED' if taskResult else 'FAILED'),
-                                isError=not taskResult)
+    result = pyToApk.executeTask(args.action)
+    pyToApk.config.logger.write('Executing command {cmd} {suc}!'
+                                .format(cmd=args.action, suc='SUCCEEDED' if result else 'FAILED'),
+                                isError=not result)
     pyToApk.config.logger.closeLogFile()
-    sys.exit(0 if taskResult else 1)
+    sys.exit(0 if result else 1)

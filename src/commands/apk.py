@@ -39,8 +39,8 @@ class ApkBuilder(object):
     def readConfig(self):
         section = self.config.getSection('apk')
         if section is None:
-            self.config.logger.warn('Failed to read any config for the apk ' +
-                                    'command from the config file.')
+            self.config.logger.warn('Failed to read any config for the apk command '
+                                    'from the config file.')
             return
         if section.hasOption('templateGit'):
             self.templateGit = section.get('templateGit')
@@ -55,22 +55,22 @@ class ApkBuilder(object):
 
     def parseCommandArgs(self, args):
         parser = SubCmdArgParser(prog='build.py apk')  # TODO: Description
-        parser.add_argument('--templateGit', help='The url to the git file of repository that ' +
+        parser.add_argument('--templateGit', help='The url to the git file of repository that '
                                                   'provides the template for the app.')
-        parser.add_argument('--sourceDir', help='The path to the directory that ' +
+        parser.add_argument('--sourceDir', help='The path to the directory that '
                                                 'contains the source code of your python program.')
         parser.add_argument('--sourceConfig',
-                            help='The path to the file that contains the configuration of your ' +
-                                 'python program. For more information on the app configuration, ' +
-                                 'visit https://github.com/Abestanis/APython_PyToApk/blob/master' +
+                            help='The path to the file that contains the configuration of your '
+                                 'python program. For more information on the app configuration, '
+                                 'visit https://github.com/Abestanis/APython_PyToApk/blob/master'
                                  '/docs/apkGeneration.md. Defaults to setup.cfg in the sourceDir.')
         parser.add_argument('--buildDebug', action='store_true', default=self.buildDebug,
-                            help='If specified, the generated apk will be ' +
-                                 'signed with a debug key and will not be optimized ' +
-                                 '(see https://developer.android.com/studio/build/' +
+                            help='If specified, the generated apk will be '
+                                 'signed with a debug key and will not be optimized '
+                                 '(see https://developer.android.com/studio/build/'
                                  'building-cmdline.html#DebugMode).')
         parser.add_argument('--install', nargs=REMAINDER,
-                            help='If specified, the install command will be ' +
+                            help='If specified, the install command will be '
                                  'executed after the build command with the arguments provided.')
         cmdArgs = parser.parse_args(args)
         if 'templateGit' in cmdArgs and cmdArgs.templateGit is not None:
@@ -92,17 +92,16 @@ class ApkBuilder(object):
             self.config.logger.error('The path to the sdk directory was not specified!')
         if self.templateGit is None:
             valid = False
-            self.config.logger.error('The url to the template repository git ' +
-                                     'file was not specified!')
+            self.config.logger.error('The url to the template repository git file '
+                                     'was not specified!')
         if self.sourceDir is None:
             valid = False
-            self.config.logger.error('The path to the source directory of your ' +
-                                     'python program was not specified!')
+            self.config.logger.error('The path to the source directory of your python program '
+                                     'was not specified!')
         elif not os.path.isdir(self.sourceDir):
             valid = False
-            self.config.logger.error('The path to the source directory of your ' +
-                                     'python program does not point to an ' +
-                                     'existing directory: ' + self.sourceDir)
+            self.config.logger.error('The path to the source directory of your python program '
+                                     'does not point to an existing directory: ' + self.sourceDir)
         if self.sourceConfig is None:
             if self.sourceDir is not None:
                 self.sourceConfig = os.path.join(self.sourceDir, 'setup.cfg')
@@ -110,13 +109,13 @@ class ApkBuilder(object):
                     self.sourceConfig = None
         elif os.path.isdir(self.sourceConfig):
             valid = False
-            self.config.logger.error('The path to the source configuration file ' +
-                                     'of your python program points to an ' +
-                                     'existing directory: ' + self.sourceConfig)
+            self.config.logger.error('The path to the source configuration file of your python '
+                                     'program points to an existing directory: {path}'
+                                     .format(path=self.sourceConfig))
         return valid
 
     def ensureTemplate(self, allowUpdate=True):
-        self.config.logger.info('Checking template from ' + self.templateGit + '...')
+        self.config.logger.info('Checking template from {path}...'.format(path=self.templateGit))
         if git.isInitalized(self.apkTemplateDir):
             return (not allowUpdate) or git.update(self.config.gitPath,
                                                    self.apkTemplateDir, self.config.logger)
@@ -136,10 +135,10 @@ class ApkBuilder(object):
 
     def copyPythonSources(self):
         pythonSourceDest = os.path.join(self.apkBuildDir, self.pythonSubPath)
-        self.config.logger.info('Cleaning examplePython sources from the template from ' +
-                                pythonSourceDest + '...')
+        self.config.logger.info('Cleaning examplePython sources from the template from {path}...'
+                                .format(path=pythonSourceDest))
         shutil.rmtree(pythonSourceDest)
-        self.config.logger.info('Copying Python sources from ' + self.sourceDir + '...')
+        self.config.logger.info('Copying Python sources from {path}...'.format(path=self.sourceDir))
         shutil.copytree(self.sourceDir, pythonSourceDest)
         return True
 
@@ -171,9 +170,8 @@ class ApkBuilder(object):
         if not self.validateConfig():
             return False
         if not deleteDir(self.apkBuildDir):
-            self.config.logger.error('Failed to delete the contents of the ' +
-                                     'specified build directory "' +
-                                     self.apkBuildDir + '"!')
+            self.config.logger.error('Failed to delete the contents of the specified build '
+                                     'directory "{dir}"!'.format(dir=self.apkBuildDir))
             return False
         if not self.ensureTemplate(not self.config.avoidNetwork):
             return False
@@ -190,11 +188,10 @@ class ApkBuilder(object):
             outputApkPath = os.path.join(self.apkOutputDir, os.path.basename(apkPath))
             deleteDir(self.apkBuildDir)
         if outputApkPath is None or not os.path.exists(outputApkPath):
-            self.config.logger.warn('Failed to copy the generated apk to the ' +
-                                    'output directory.')
+            self.config.logger.warn('Failed to copy the generated apk to the output directory.')
             outputApkPath = apkPath
-        self.config.logger.info('The apk was successfully build and is stored at\n' +
-                                outputApkPath)
+        self.config.logger.info('The apk was successfully build and is stored at:\n{path}'
+                                .format(path=outputApkPath))
         if self.doInstall:
             from .install import run as runInstall
             return runInstall(self.config, self.installArgs)

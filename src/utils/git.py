@@ -51,8 +51,8 @@ def initialize(gitPath, repoUrl, repoDir, logger):
     """
     if os.path.exists(repoDir):
         if not os.path.isdir(repoDir):
-            logger.error('Failed to initialize the repository from "' + repoUrl +
-                         '" to "' + repoDir + '": The destination is an existing file!')
+            logger.error('Failed to initialize the repository from "{url}" to "{dir}": '
+                         'The destination is an existing file!'.format(url=repoUrl, dir=repoDir))
             return False
         rmtree(repoDir)
     args = [gitPath, 'clone', '--progress', repoUrl, repoDir]

@@ -132,17 +132,17 @@ class Config(object):
             if path is None:
                 if allowMissing:
                     return
-                self.logger.error('Invalid configuration: No path for the ' +
-                                  name + ' directory given!')
+                self.logger.error('Invalid configuration: No path for the {name} directory given!'
+                                  .format(name=name))
                 return False
             elif os.path.isfile(path):
-                self.logger.error('Invalid configuration: The path to the ' + name +
-                                  ' directory points to an existing file (' + path + ')!')
+                self.logger.error('Invalid configuration: The path to the {name} directory points '
+                                  'to an existing file ({path})!'.format(name=name, path=path))
                 return False
             elif requireExist and not os.path.isdir(path):
-                self.logger.error('Invalid configuration: The path to the ' + name +
-                                  ' directory does not point to an existing directory ('
-                                  + path + ')!')
+                self.logger.error('Invalid configuration: The path to the {name} directory does '
+                                  'not point to an existing directory ({path})!'
+                                  .format(name=name, path=path))
                 return False
             return True
 
@@ -153,8 +153,8 @@ class Config(object):
         valid = _checkDir(self.ndkPath, 'ndk', allowMissing=True) and valid
         if self.gitPath is not None and not os.path.isfile(self.gitPath):
             valid = False
-            self.logger.error('Invalid configuration: The path to the git executable' +
-                              ' is invalid (' + self.gitPath + ')!')
+            self.logger.error('Invalid configuration: The path to the git executable is invalid '
+                              '({path})'.format(path=self.gitPath))
         return valid
 
     def getSection(self, sectionName):
@@ -225,5 +225,5 @@ class Config(object):
         if key is not None:
             self.logger.setPriority(LOG_LEVELS[key])
             return True
-        self.logger.warn('Failed to parse invalid log level "' + logLevel + '"')
+        self.logger.warn('Failed to parse invalid log level "{level}"'.format(level=logLevel))
         return False
