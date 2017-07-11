@@ -88,7 +88,7 @@ class Config(object):
         if self._parser.has_option('Paths', 'templateDir'):
             self.templateDir = resolvePath(self._parser.get('Paths', 'templateDir'), self.currDir)
         if self._parser.has_option('Paths', 'gitPath'):
-            self.gitPath = resolvePath(self._parser.get('Paths', 'gitPath'), self.currDir)
+            self.gitPath = self._parser.get('Paths', 'gitPath')
         if self._parser.has_option('Paths', 'sdkPath'):
             self.sdkPath = resolvePath(self._parser.get('Paths', 'sdkPath'), self.currDir)
         if self._parser.has_option('Paths', 'ndkPath'):
@@ -113,7 +113,7 @@ class Config(object):
         if 'templateDir' in args and args.templateDir is not None:
             self.templateDir = resolvePath(args.templateDir, self.currDir)
         if 'gitPath' in args and args.gitPath is not None:
-            self.gitPath = resolvePath(args.gitPath, self.currDir)
+            self.gitPath = args.gitPath
         if 'sdkPath' in args and args.sdkPath is not None:
             self.sdkPath = resolvePath(args.sdkPath, self.currDir)
         if 'ndkPath' in args and args.ndkPath is not None:
@@ -151,7 +151,7 @@ class Config(object):
         valid = _checkDir(self.templateDir, 'template', requireExist=False) and valid
         valid = _checkDir(self.sdkPath, 'sdk', allowMissing=True) and valid
         valid = _checkDir(self.ndkPath, 'ndk', allowMissing=True) and valid
-        if self.gitPath is not None and not os.path.isfile(self.gitPath):
+        if self.gitPath is not None and os.system(self.gitPath + ' --version') != 0:
             valid = False
             self.logger.error('Invalid configuration: The path to the git executable is invalid '
                               '({path})'.format(path=self.gitPath))
