@@ -3,9 +3,9 @@ from __future__ import absolute_import
 import os
 
 try:
-    from ConfigParser import ConfigParser
+    from ConfigParser import RawConfigParser
 except ImportError:
-    from configparser import ConfigParser
+    from configparser import RawConfigParser
 from .logger import Logger
 from .utils.files import resolvePath
 
@@ -173,7 +173,7 @@ class Config(object):
         """
         if self._parser is not None:
             return True
-        self._parser = ConfigParser()
+        self._parser = RawConfigParser()
         path = resolvePath(path, self.currDir)
         if path not in self._parser.read(path):
             self.logger.warn('Failed to read the config file from ' + path)

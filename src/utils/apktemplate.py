@@ -4,9 +4,9 @@ import os
 import re
 
 try:
-    from ConfigParser import ConfigParser
+    from ConfigParser import RawConfigParser
 except ImportError:
-    from configparser import ConfigParser
+    from configparser import RawConfigParser
 from .files import resolvePath
 from shutil import copy as copyFile
 
@@ -96,7 +96,7 @@ class ApkTemplateFiller(object):
         Load formatting arguments from the section
         android_app of configuration file at path.
         """
-        parser = ConfigParser()
+        parser = RawConfigParser()
         if path not in parser.read(path):
             self.logger.error('Failed to read the apps config from {path}'.format(path=path))
             return False
