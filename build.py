@@ -29,7 +29,7 @@ class PyToApk(object):
     def executeTask(self, task):
         if not self.config.validateValues():
             return False
-        command = getattr(__import__('src.commands.' + task), task)
+        command = getattr(getattr(__import__('src.commands.' + task), 'commands'), task)
         success = False
         try:
             success = command.run(self.config, self.commandArgs)
