@@ -1,10 +1,4 @@
-import os
-import sys
-
-from argparse import ArgumentParser, REMAINDER
-from src.config import Config
-
-DESCRIPTION = '''
+"""
 This script converts your Python program into an application that can start
 on Android and will run your Python code with the Python interpreter
 provided by the APython project (see https://github.com/Abestanis/APython).
@@ -13,7 +7,13 @@ It is also capable of packaging a python module for Android and correctly
 compiling any C or C++ code in the module.
 
 Created 25.05.2016 by Sebastian Scholz.
-'''
+"""
+
+import os
+import sys
+
+from argparse import ArgumentParser, REMAINDER
+from src.config import Config
 
 
 class PyToApk(object):
@@ -46,7 +46,7 @@ class PyToApk(object):
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser(description=DESCRIPTION)
+    parser = ArgumentParser(description=__doc__)
     commandFiles = os.listdir(os.path.join(os.path.dirname(__file__), 'src', 'commands'))
     commands = [commandFile[:-3] for commandFile in commandFiles
                 if commandFile != '__init__.py' and commandFile[-3:] == '.py']
