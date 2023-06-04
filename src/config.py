@@ -131,7 +131,7 @@ class Config(object):
         def _checkDir(path, name, allowMissing=False, requireExist=True):
             if path is None:
                 if allowMissing:
-                    return
+                    return True
                 self.logger.error('Invalid configuration: No path for the {name} directory given!'
                                   .format(name=name))
                 return False
