@@ -17,7 +17,7 @@ To pack your Python sources into an apk, that is executable by the [Python host]
 
 If you wish to create a debug apk (signed with an debug key, [usable for testing, not for deployment](https://developer.android.com/studio/build/building-cmdline.html#DebugMode)), add the `--buildDebug` parameter. Generating an apk signed with a custom key is currently *not supported*.
 
-You need to configure the generated apk file, see [Configure the apk generation](https://github.com/Abestanis/APython_PyToApk/blob/master/docs/apkGeneration.md#configure-the-apk-generation) for more information.
+You need to configure the generated apk file, see [Configure the apk generation](https://github.com/Abestanis/APython_PyToApk/blob/main/docs/apkGeneration.md#configure-the-apk-generation) for more information.
 
 It is possible to install the generated apk by calling the install command after the apk command finishes, or you can supply the `--install` argument to the apk command. See the next section for more information about installing.
 

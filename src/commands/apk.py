@@ -62,7 +62,7 @@ class ApkBuilder(object):
         parser.add_argument('--sourceConfig',
                             help='The path to the file that contains the configuration of your '
                                  'python program. For more information on the app configuration, '
-                                 'visit https://github.com/Abestanis/APython_PyToApk/blob/master'
+                                 'visit https://github.com/Abestanis/APython_PyToApk/blob/main'
                                  '/docs/apkGeneration.md. Defaults to setup.cfg in the sourceDir.')
         parser.add_argument('--buildDebug', action='store_true', default=self.buildDebug,
                             help='If specified, the generated apk will be '

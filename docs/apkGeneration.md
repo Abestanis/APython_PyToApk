@@ -27,7 +27,7 @@ You need to configure the generated apk before you can release it. Otherwise you
 For example, the `appId` value needs to be an id unique to your application (see the table below for more information). If this value is not specified, the default value of the template is used and your app will not be installable with an other Python app which made the same mistake.
 
 To configure the apk, you need to create a `setup.cfg` file in your source directory with a section `android_app` that contains the properties you want to configure.
-An [example `setup.cfg` can be found here](https://github.com/Abestanis/APython_PyToApk/blob/master/examplePythonProgram/setup.cfg).
+An [example `setup.cfg` can be found here](https://github.com/Abestanis/APython_PyToApk/blob/main/examplePythonProgram/setup.cfg).
 
 This is a table of all available properties that can be changed, their name in the `setup.cfg` file and a description.
 The property name is used in the template and only useful to you if you want to create your own template.
@@ -49,4 +49,4 @@ _Default path: app/src/main/AndroidManifest.xml_ | app_manifest_template | A pat
 
 ### Use a custom template
 If the Python app template does not fullfill your needs, you can create your own apk template and specify it to the apk command with the `--templateGit` commandline option (_--templateDir option is planned_).
-In order to implement the communication to the Python host, have a look at the [Python app project](https://github.com/Abestanis/APython_PyApp), specifically at the [InterpreterHost class](https://github.com/Abestanis/APython_PyApp/blob/master/app/src/main/java/com.apython.python.apython_pyapp/InterpreterHost.java).
+In order to implement the communication to the Python host, have a look at the [Python app project](https://github.com/Abestanis/APython_PyApp), specifically at the [InterpreterHost class](https://github.com/Abestanis/APython_PyApp/blob/main/app/src/main/java/com.apython.python.apython_pyapp/InterpreterHost.java).

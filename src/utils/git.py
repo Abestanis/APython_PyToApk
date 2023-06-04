@@ -30,7 +30,7 @@ def update(gitPath, repoDir, logger):
     logger.verbose('Calling ' + subprocess.list2cmdline(args))
     if subprocess.call(args) != 0:
         return False
-    args = [gitPath, '-C', repoDir, 'reset', '--hard', 'origin/master']
+    args = [gitPath, '-C', repoDir, 'reset', '--hard', 'origin/main']
     logger.verbose('Calling ' + subprocess.list2cmdline(args))
     if subprocess.call(args) != 0:
         return False

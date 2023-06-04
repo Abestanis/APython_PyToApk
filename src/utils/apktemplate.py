@@ -77,7 +77,7 @@ class ApkTemplateFiller(object):
                     valid = False
         if not valid:
             self.logger.error('See https://github.com/Abestanis/APython_PyToApk/'
-                              'blob/master/docs/apkGeneration.md for more information.')
+                              'blob/main/docs/apkGeneration.md for more information.')
         if self.appIcon is None:
             self.logger.warn('There was no icon specified, the default icon provided by '
                              'the template will be used.')
