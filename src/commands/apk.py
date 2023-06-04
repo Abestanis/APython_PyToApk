@@ -155,7 +155,7 @@ class ApkBuilder(object):
             self.config.logger.error('Generating the apk failed!')
             return None
         apkPath = os.path.join(self.apkBuildDir, self.apkSubPath,
-                               self.DEBUG_APK if debug else self.RELEASE_APK)
+                               'debug' if debug else 'release', self.DEBUG_APK if debug else self.RELEASE_APK)
         if not os.path.exists(apkPath):
             return None
         return apkPath
@@ -193,8 +193,8 @@ class ApkBuilder(object):
         self.config.logger.info('The apk was successfully build and is stored at:\n{path}'
                                 .format(path=outputApkPath))
         if self.doInstall:
-            from .install import run as runInstall
-            return runInstall(self.config, self.installArgs)
+            from .install import run as run_install
+            return run_install(self.config, self.installArgs)
         return True
 
 
